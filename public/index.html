@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BotFace</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0d0d0d">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="face" id="face">
+            <div class="eyes">
+                <div class="eye left-eye"></div>
+                <div class="eye right-eye"></div>
+            </div>
+            <div class="mouth"></div>
+        </div>
+        
+        <div class="controls">
+            <div class="status-indicator" id="statusIndicator">Esperando...</div>
+            <button id="micBtn" class="mic-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+            </button>
+            <button id="settingsBtn" class="settings-btn">⚙️</button>
+        </div>
+        
+        <div class="debug-transcript" id="transcriptBox">...</div>
+    </div>
+
+    <!-- Modal de Configuración -->
+    <div id="setupModal" class="modal">
+        <div class="modal-content">
+            <h2>Configura tu BotFace</h2>
+            
+            <label for="configPersonality">Personalidad:</label>
+            <select id="configPersonality">
+                <option value="charlatan">Argentino Charlatán (Amigo)</option>
+                <option value="serio">Serio y Profesional</option>
+                <option value="cientifico">Científico Analítico</option>
+                <option value="robot">Robot Genérico</option>
+            </select>
+
+            <label for="configVoice">Voz del Bot:</label>
+            <select id="configVoice">
+                <option value="">Cargando voces...</option>
+            </select>
+
+            <label for="configTeam">Equipo de Fútbol:</label>
+            <input type="text" id="configTeam" placeholder="Ej: Boca, River, San Martín de Tucumán..." />
+
+            <label for="configInterests">Intereses (Noticias):</label>
+            <input type="text" id="configInterests" placeholder="Ej: Finanzas, Tecnología, Geopolítica..." />
+
+            <label for="configPreferences">Preferencias Personales:</label>
+            <input type="text" id="configPreferences" placeholder="Ej: Tomo café con crema, me gusta madrugar..." />
+
+            <label for="configInstructions">Instrucciones Especiales:</label>
+            <textarea id="configInstructions" placeholder="Ej: Tratame siempre de usted. Hablame como si estuvieras enojado." rows="3"></textarea>
+
+            <button id="saveConfigBtn">Guardar y Despertar</button>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
