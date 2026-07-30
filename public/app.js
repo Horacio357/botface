@@ -6,6 +6,15 @@ const settingsBtn = document.getElementById('settingsBtn');
 const setupModal = document.getElementById('setupModal');
 const saveConfigBtn = document.getElementById('saveConfigBtn');
 
+// Elementos de cámara
+const cameraVideo = document.getElementById('cameraVideo');
+const cameraCanvas = document.getElementById('cameraCanvas');
+const camToggleBtn = document.getElementById('camToggleBtn');
+const camSwitchBtn = document.getElementById('camSwitchBtn');
+
+let currentStream = null;
+let useFrontCamera = true;
+
 let conversationHistory = [];
 let userConfig = {};
 
@@ -135,26 +144,88 @@ micBtn.addEventListener('click', () => {
 
 function setFaceState(state, emotion = 'neutral') {
     // states: neutral, listening, thinking, speaking
-    // emotion: neutral, feliz, enojado, sorprendido
+    // emotion: neutral, feliz, enojado, sorprendido, triste, durmiendo
     face.className = `face ${state} ${emotion}`;
+}
+
+// Funciones de Cámara
+async function startCamera() {
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+    }
+    const constraints = {
+        video: { facingMode: useFrontCamera ? "user" : "environment" }
+    };
+    try {
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        cameraVideo.srcObject = currentStream;
+        camToggleBtn.style.color = "#ff4444"; // Rojo para indicar que está activa
+        camSwitchBtn.style.display = "inline-block";
+    } catch (err) {
+        console.error("Error accessing camera", err);
+        alert("No se pudo acceder a la cámara.");
+    }
+}
+
+function stopCamera() {
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        currentStream = null;
+    }
+    camToggleBtn.style.color = "var(--neon-cyan)";
+    camSwitchBtn.style.display = "none";
+}
+
+camToggleBtn.addEventListener('click', () => {
+    if (currentStream) {
+        stopCamera();
+    } else {
+        startCamera();
+    }
+});
+
+camSwitchBtn.addEventListener('click', () => {
+    useFrontCamera = !useFrontCamera;
+    startCamera();
+});
+
+function captureFrame() {
+    if (!currentStream) return null;
+    cameraCanvas.width = cameraVideo.videoWidth;
+    cameraCanvas.height = cameraVideo.videoHeight;
+    const ctx = cameraCanvas.getContext('2d');
+    ctx.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
+    // Compresión para no enviar un payload muy grande
+    return cameraCanvas.toDataURL('image/jpeg', 0.5); 
 }
 
 async function processUserMessage(text) {
     setFaceState('thinking');
     statusIndicator.innerText = "Pensando...";
     
+    // Capturar frame si la cámara está activa
+    const frameBase64 = captureFrame();
+
     // Agregamos el mensaje del usuario al historial
     conversationHistory.push({ role: "user", content: text });
 
     try {
+        const payload = {
+            messages: conversationHistory,
+            config: userConfig,
+            localTime: new Date().toISOString()
+        };
+        
+        if (frameBase64) {
+            payload.image = frameBase64;
+        }
+
         const response = await fetch('/api/chat', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                messages: conversationHistory,
-                config: userConfig,
-                localTime: new Date().toISOString()
-            })
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
         });
 
         const data = await response.json();

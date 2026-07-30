@@ -158,25 +158,42 @@ const tools = [
 
 app.post('/api/chat', async (req, res) => {
     try {
-        const { messages, config, localTime } = req.body;
+        const { messages, config, localTime, image } = req.body;
         
         if (!messages || !Array.isArray(messages)) {
             return res.status(400).json({ error: "Invalid messages format" });
         }
 
         const dynamicSystemPrompt = generateSystemPrompt(config, localTime);
-
-        // Prepend the system prompt
         let conversation = [dynamicSystemPrompt, ...messages];
 
-        console.log("[Groq API] Sending request...");
-        
-        let response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-            model: "llama-3.1-8b-instant",
+        let modelName = "llama-3.1-8b-instant";
+        let requestPayload = {
+            model: modelName,
             messages: conversation,
             tools: tools,
             tool_choice: "auto"
-        }, {
+        };
+
+        if (image) {
+            // Modificar el último mensaje para que sea multimodal
+            const lastMessage = conversation[conversation.length - 1];
+            if (lastMessage && lastMessage.role === "user") {
+                lastMessage.content = [
+                    { type: "text", text: lastMessage.content },
+                    { type: "image_url", image_url: { url: image } }
+                ];
+            }
+            // Cambiar a modelo visual y quitar tools (suelen dar problemas en modelos visuales)
+            requestPayload.model = "llama-3.2-11b-vision-preview";
+            delete requestPayload.tools;
+            delete requestPayload.tool_choice;
+            console.log("[Groq API] Using Vision Model...");
+        }
+
+        console.log("[Groq API] Sending request...");
+        
+        let response = await axios.post('https://api.groq.com/openai/v1/chat/completions', requestPayload, {
             headers: {
                 'Authorization': `Bearer ${GROQ_API_KEY}`,
                 'Content-Type': 'application/json'
